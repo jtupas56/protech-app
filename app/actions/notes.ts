@@ -17,7 +17,7 @@ export async function getNotes() {
       .orderBy(desc(notes.updatedAt))
 
     return userNotes
-  } catch (error) {
+  } catch (error) { 
     console.error('Error in getNotes:', error)
     throw error
   }
