@@ -27,7 +27,7 @@ export function Editor({ note, onNoteChange, onNoteDeleted, onContentChange }: E
   const [isSaving, setIsSaving] = useState(false)
   const [showRestoredMessage, setShowRestoredMessage] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const saveTimeoutRef = useRef<NodeJS.Timeout>()
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     setContent(note?.content || '')

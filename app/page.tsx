@@ -1,145 +1,58 @@
-'use client'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Lock, Shield, FileText } from 'lucide-react'
 
-import { useState, useEffect } from 'react'
-import { useAuth } from '@clerk/nextjs'
-import { Sidebar } from '@/components/sidebar'
-import { Editor } from '@/components/editor'
-import { DecryptPanel } from '@/components/decrypt-panel'
-import { DeleteDialog } from '@/components/delete-dialog'
-import { getNotes, createNote } from '@/app/actions/notes'
-
-interface Note {
-  id: string
-  content: string
-  updatedAt: Date
-  createdAt: Date
-}
-
-export default function NotesPage() {
-  const { isLoaded, userId } = useAuth()
-  const [notes, setNotes] = useState<Note[]>([])
-  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
-  const [decryptMode, setDecryptMode] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [editorKey, setEditorKey] = useState(0)
-
-  const selectedNote = notes.find((n) => n.id === selectedNoteId) || null
-
-  useEffect(() => {
-    if (userId) {
-      loadNotes()
-    }
-  }, [userId])
-
-  const loadNotes = async () => {
-    const loadedNotes = await getNotes()
-    setNotes(loadedNotes)
-    if (loadedNotes.length > 0 && !selectedNoteId) {
-      setSelectedNoteId(loadedNotes[0].id)
-    }
-  }
-
-  const handleNewNote = async () => {
-    const newNote = await createNote('')
-    setNotes([newNote, ...notes])
-    setSelectedNoteId(newNote.id)
-    setDecryptMode(false)
-  }
-
-  const handleSelectNote = (id: string) => {
-    setSelectedNoteId(id)
-    setDecryptMode(false)
-  }
-
-  const handleDecrypt = () => {
-    setDecryptMode(true)
-    setSelectedNoteId(null)
-  }
-
-  const handleDelete = () => {
-    if (selectedNote) {
-      setDeleteDialogOpen(true)
-    }
-  }
-
-  const handleConfirmDelete = async () => {
-    if (selectedNoteId) {
-      const { deleteNote } = await import('@/app/actions/notes')
-      await deleteNote(selectedNoteId)
-      setNotes(notes.filter((n) => n.id !== selectedNoteId))
-      setSelectedNoteId(notes.find((n) => n.id !== selectedNoteId)?.id || null)
-      setDeleteDialogOpen(false)
-    }
-  }
-
-  const handleNoteDeleted = () => {
-    setNotes(notes.filter((n) => n.id !== selectedNoteId))
-    setSelectedNoteId(notes.find((n) => n.id !== selectedNoteId)?.id || null)
-  }
-
-  const handleContentChange = (content: string) => {
-    setNotes(
-      notes.map((n) => (n.id === selectedNoteId ? { ...n, content } : n))
-    )
-  }
-
-  const handleDecryptSuccess = (noteId: string, content: string) => {
-    loadNotes()
-    setSelectedNoteId(noteId)
-    setDecryptMode(false)
-    setEditorKey((prev) => prev + 1)
-  }
-
-  const getTitle = (content: string) => {
-    const firstLine = content.split('\n')[0]
-    return firstLine || 'Untitled'
-  }
-
-  if (!isLoaded) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>
-  }
-
-  if (!userId) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Please sign in to access your notes</h1>
-          <p className="text-muted-foreground">Use the sign-in button in the top right corner</p>
+          <h1 className="text-5xl font-bold mb-6">Protech Notes</h1>
+          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Secure, encrypted note-taking application. Your notes are encrypted client-side 
+            and stored as JSON files that only you can access.
+          </p>
+          <Link href="/encrypted-note">
+            <Button size="lg" className="mr-4">
+              Get Started
+            </Button>
+          </Link>
+          <Link href="/contact">
+            <Button size="lg" variant="outline">
+              Contact Us
+            </Button>
+          </Link>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8 mt-20">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm">
+            <Lock className="w-12 h-12 mb-4 text-primary" />
+            <h3 className="text-xl font-semibold mb-2">Client-Side Encryption</h3>
+            <p className="text-muted-foreground">
+              Your notes are encrypted using AES-256 CBC encryption before leaving your browser.
+              The encryption key is never stored on our servers.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm">
+            <Shield className="w-12 h-12 mb-4 text-primary" />
+            <h3 className="text-xl font-semibold mb-2">Secure Storage</h3>
+            <p className="text-muted-foreground">
+              Encrypted notes are downloaded as JSON files and removed from the database.
+              Only you have the key to decrypt your notes.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm">
+            <FileText className="w-12 h-12 mb-4 text-primary" />
+            <h3 className="text-xl font-semibold mb-2">Easy to Use</h3>
+            <p className="text-muted-foreground">
+              Simple, clean interface for creating and managing your encrypted notes.
+              Decrypt your notes anytime by uploading the JSON file.
+            </p>
+          </div>
         </div>
       </div>
-    )
-  }
-
-  return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
-      <Sidebar
-        notes={notes}
-        selectedNoteId={selectedNoteId}
-        onSelectNote={handleSelectNote}
-        onNewNote={handleNewNote}
-        onDecrypt={handleDecrypt}
-        onDelete={handleDelete}
-        decryptMode={decryptMode}
-      />
-
-      {decryptMode ? (
-        <DecryptPanel onSuccess={handleDecryptSuccess} />
-      ) : (
-        <Editor
-          key={editorKey}
-          note={selectedNote}
-          onNoteChange={(note) => setSelectedNoteId(note?.id || null)}
-          onNoteDeleted={handleNoteDeleted}
-          onContentChange={handleContentChange}
-        />
-      )}
-
-      <DeleteDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        noteTitle={selectedNote ? getTitle(selectedNote.content) : ''}
-      />
     </div>
   )
 }
