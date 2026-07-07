@@ -17,13 +17,12 @@ Encrypted note-taking web app with client-side encryption.
 - Clerk (authentication)
 - Neon Postgres (database)
 - Drizzle ORM
-- shadcn/ui (components)
 - Tailwind CSS
 
 ## Getting Started
 
 ```bash
-pnpm dev
+npm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
