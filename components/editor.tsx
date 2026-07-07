@@ -1,10 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Lock } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { formatDistanceToNow } from 'date-fns'
+import { Lock, PanelLeft } from 'lucide-react'
 import { encrypt, downloadEncryptedNote } from '@/lib/crypto'
 import { updateNote, deleteNote } from '@/app/actions/notes'
 
@@ -19,11 +16,12 @@ interface EditorProps {
   note: Note | null
   onNoteDeleted: () => void
   onContentChange: (content: string) => void
+  isSidebarOpen: boolean
+  onToggleSidebar: () => void
 }
 
-export function Editor({ note, onNoteDeleted, onContentChange }: EditorProps) {
+export function Editor({ note, onNoteDeleted, onContentChange, isSidebarOpen, onToggleSidebar }: EditorProps) {
   const [content, setContent] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const prevNoteIdRef = useRef<string | null>(null)
@@ -39,29 +37,20 @@ export function Editor({ note, onNoteDeleted, onContentChange }: EditorProps) {
   }, [note])
 
   useEffect(() => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
-
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     if (content !== note?.content && note) {
       saveTimeoutRef.current = setTimeout(async () => {
-        setIsSaving(true)
         await updateNote(note.id, content)
-        setIsSaving(false)
         onContentChange(content)
       }, 600)
     }
-
     return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
   }, [content, note, onContentChange])
 
   const handleEncrypt = async () => {
     if (!note) return
-
     const payload = await encrypt(content)
     downloadEncryptedNote(payload, note.createdAt)
     await deleteNote(note.id)
@@ -70,59 +59,47 @@ export function Editor({ note, onNoteDeleted, onContentChange }: EditorProps) {
 
   if (!note) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-muted/20">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 text-muted-foreground">
-            <svg
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              className="w-full h-full"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </div>
-          <div className="text-lg font-medium text-muted-foreground">
-            No note selected
-          </div>
-          <div className="text-sm text-muted-foreground mt-1">
-            Create a new note or decrypt one from a file.
-          </div>
-        </div>
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-neutral-400 text-sm">Select or create a note</p>
       </div>
     )
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-100 dark:bg-gray-900">
-      <div className="h-12 border-b bg-white dark:bg-gray-800 flex items-center justify-between px-4">
-        <div className="text-sm text-muted-foreground">
-          {isSaving ? 'Saving...' : `Edited ${formatDistanceToNow(new Date(note.updatedAt))} ago`}
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Editor header */}
+      <div className="flex items-center justify-between px-4 py-2 flex-shrink-0 border-b border-neutral-200 dark:border-neutral-800">
+        {/* Show toggle button only when sidebar is closed */}
+        {!isSidebarOpen && (
+          <button
+            onClick={onToggleSidebar}
+            className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            aria-label="Open sidebar"
+          >
+            <PanelLeft className="w-4 h-4" />
+          </button>
+        )}
+        <div className={!isSidebarOpen ? 'ml-auto' : 'ml-auto'}>
+          <button
+            onClick={handleEncrypt}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-neutral-400 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-neutral-100 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+          >
+            <Lock className="w-3.5 h-3.5" />
+            Encrypt
+          </button>
         </div>
-        <Button onClick={handleEncrypt} size="sm" variant="outline">
-          <Lock className="w-4 h-4 mr-2" />
-          Encrypt
-        </Button>
       </div>
 
-      <div className="flex-1 p-6 flex justify-center overflow-auto">
-        <div className="w-full max-w-[210mm] min-h-[297mm] bg-white dark:bg-gray-800 shadow-lg rounded-sm p-12">
-          <Textarea
-            ref={textareaRef}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full min-h-[273mm] resize-none border-0 focus-visible:ring-0 text-base leading-relaxed"
-            placeholder="Start writing..."
-            style={{
-              fontFamily: 'inherit',
-            }}
-          />
-        </div>
+      {/* Writing area */}
+      <div className="flex-1 overflow-auto">
+        <textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="w-full h-full min-h-full resize-none border-0 focus:outline-none p-6 text-base leading-relaxed bg-transparent text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-300 dark:placeholder:text-neutral-700"
+          placeholder="Start writing..."
+          style={{ fontFamily: 'inherit' }}
+        />
       </div>
     </div>
   )

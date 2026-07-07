@@ -1,6 +1,7 @@
+// components/navbar.tsx
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation' // Import this
 import { UserButton, SignInButton, SignUpButton, Show } from '@clerk/nextjs'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
@@ -8,10 +9,16 @@ import { Button } from '@/components/ui/button'
 export function Navbar() {
   const pathname = usePathname()
 
+  // 🔥 HIDE the global navbar specifically on the encrypted note page
+  if (pathname === '/encrypted-note') {
+    return null
+  }
+
   const isActive = (path: string) => pathname === path
 
   return (
     <nav className="border-b bg-white dark:bg-gray-900">
+      {/* ... rest of your navbar code stays exactly the same ... */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">

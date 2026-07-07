@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, SignInButton } from '@clerk/nextjs'
+import Link from 'next/link'
 import { Sidebar } from '@/components/sidebar'
 import { Editor } from '@/components/editor'
 import { DecryptPanel } from '@/components/decrypt-panel'
-import { DeleteDialog } from '@/components/delete-dialog'
-import { getNotes, createNote } from '@/app/actions/notes'
+import { getNotes, createNote, deleteNote } from '@/app/actions/notes'
+import { ArrowLeft } from 'lucide-react'
 
 interface Note {
   id: string
@@ -20,8 +21,8 @@ export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([])
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
   const [decryptMode, setDecryptMode] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [editorKey, setEditorKey] = useState(0)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   const selectedNote = notes.find((n) => n.id === selectedNoteId) || null
 
@@ -53,25 +54,19 @@ export default function NotesPage() {
     setSelectedNoteId(null)
   }
 
-  const handleDelete = () => {
-    if (selectedNote) {
-      setDeleteDialogOpen(true)
-    }
-  }
-
-  const handleConfirmDelete = async () => {
-    if (selectedNoteId) {
-      const { deleteNote } = await import('@/app/actions/notes')
-      await deleteNote(selectedNoteId)
-      setNotes(notes.filter((n) => n.id !== selectedNoteId))
-      setSelectedNoteId(notes.find((n) => n.id !== selectedNoteId)?.id || null)
-      setDeleteDialogOpen(false)
+  const handleDeleteNote = async (id: string) => {
+    await deleteNote(id)
+    const remaining = notes.filter((n) => n.id !== id)
+    setNotes(remaining)
+    if (selectedNoteId === id) {
+      setSelectedNoteId(remaining[0]?.id || null)
     }
   }
 
   const handleNoteDeleted = () => {
-    setNotes(notes.filter((n) => n.id !== selectedNoteId))
-    setSelectedNoteId(notes.find((n) => n.id !== selectedNoteId)?.id || null)
+    const remaining = notes.filter((n) => n.id !== selectedNoteId)
+    setNotes(remaining)
+    setSelectedNoteId(remaining[0]?.id || null)
   }
 
   const handleContentChange = (newContent: string) => {
@@ -89,59 +84,70 @@ export default function NotesPage() {
     })
   }
 
-  const getTitle = (content: string) => {
-    const firstLine = content.split('\n')[0]
-    return firstLine || 'Untitled'
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen)
   }
 
   if (!isLoaded) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>
   }
 
+  // 🟢 Signed Out: Show minimal login/back UI
   if (!userId) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Please sign in to access your notes</h1>
-          <p className="text-muted-foreground">Use the sign-in button in the top right corner</p>
+      <div className="flex h-screen flex-col items-center justify-center bg-neutral-50 dark:bg-neutral-950">
+        <Link
+          href="/"
+          className="absolute top-4 left-4 p-2 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-400 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-neutral-100"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <div className="text-center max-w-sm">
+          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
+            Protech Notes
+          </h1>
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm mb-6">
+            Sign in to access your encrypted notes.
+          </p>
+          <SignInButton mode="modal">
+            <button className="px-4 py-2 text-sm rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200 transition-colors">
+              Sign In
+            </button>
+          </SignInButton>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-7xl h-[calc(100vh-2rem)] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+    <div className="flex h-screen bg-neutral-50 dark:bg-neutral-950 overflow-hidden">
+      {isSidebarOpen && (
         <Sidebar
           notes={notes}
           selectedNoteId={selectedNoteId}
           onSelectNote={handleSelectNote}
           onNewNote={handleNewNote}
           onDecrypt={handleDecrypt}
-          onDelete={handleDelete}
+          onDeleteNote={handleDeleteNote}
           decryptMode={decryptMode}
+          onToggleSidebar={toggleSidebar}
         />
+      )}
 
-        <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-950 overflow-hidden">
-          {decryptMode ? (
-            <DecryptPanel onSuccess={handleDecryptSuccess} />
-          ) : (
-            <Editor
-              key={editorKey}
-              note={selectedNote}
-              onNoteDeleted={handleNoteDeleted}
-              onContentChange={handleContentChange}
-            />
-          )}
-        </div>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {decryptMode ? (
+          <DecryptPanel onSuccess={handleDecryptSuccess} />
+        ) : (
+          <Editor
+            key={editorKey}
+            note={selectedNote}
+            onNoteDeleted={handleNoteDeleted}
+            onContentChange={handleContentChange}
+            isSidebarOpen={isSidebarOpen}
+            onToggleSidebar={toggleSidebar}
+          />
+        )}
       </div>
-
-      <DeleteDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        noteTitle={selectedNote ? getTitle(selectedNote.content) : ''}
-      />
     </div>
   )
 }
