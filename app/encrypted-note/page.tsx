@@ -110,27 +110,31 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
-      <Sidebar
-        notes={notes}
-        selectedNoteId={selectedNoteId}
-        onSelectNote={handleSelectNote}
-        onNewNote={handleNewNote}
-        onDecrypt={handleDecrypt}
-        onDelete={handleDelete}
-        decryptMode={decryptMode}
-      />
-
-      {decryptMode ? (
-        <DecryptPanel onSuccess={handleDecryptSuccess} />
-      ) : (
-        <Editor
-          key={editorKey}
-          note={selectedNote}
-          onNoteDeleted={handleNoteDeleted}
-          onContentChange={handleContentChange}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-7xl h-[calc(100vh-2rem)] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+        <Sidebar
+          notes={notes}
+          selectedNoteId={selectedNoteId}
+          onSelectNote={handleSelectNote}
+          onNewNote={handleNewNote}
+          onDecrypt={handleDecrypt}
+          onDelete={handleDelete}
+          decryptMode={decryptMode}
         />
-      )}
+
+        <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-950 overflow-hidden">
+          {decryptMode ? (
+            <DecryptPanel onSuccess={handleDecryptSuccess} />
+          ) : (
+            <Editor
+              key={editorKey}
+              note={selectedNote}
+              onNoteDeleted={handleNoteDeleted}
+              onContentChange={handleContentChange}
+            />
+          )}
+        </div>
+      </div>
 
       <DeleteDialog
         open={deleteDialogOpen}
