@@ -1,6 +1,6 @@
 'use client'
 
-import { Plus, LockOpen, MoreVertical, Home, Pencil, Download, Lock, Trash2 } from 'lucide-react'
+import { Plus, LockOpen, MoreVertical, Home, Search, Pencil, Download, Lock, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { UserButton, useUser } from '@clerk/nextjs'
@@ -55,6 +55,16 @@ export function Sidebar({
     return firstLine || 'Untitled'
   }
 
+  const handleSearch = () => {
+    const query = prompt('Search notes...')
+    if (query && query.trim() !== '') {
+      const filtered = notes.filter((n) =>
+        n.content.toLowerCase().includes(query.toLowerCase())
+      )
+      console.log('Search results:', filtered)
+    }
+  }
+
   return (
     <div className="w-72 flex-shrink-0 bg-neutral-50 dark:bg-neutral-950 flex flex-col h-full border-r border-neutral-200 dark:border-neutral-800">
       <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-neutral-800 relative">
@@ -69,7 +79,13 @@ export function Sidebar({
           >
             <Home className="w-4 h-4" />
           </Link>
-          <ThemeToggle />
+          <button
+            onClick={handleSearch}
+            className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            aria-label="Search notes"
+          >
+            <Search className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -155,11 +171,14 @@ export function Sidebar({
         ))}
       </div>
 
-      <div className="border-t border-neutral-200 dark:border-neutral-800 p-3 flex items-center gap-3">
-        <UserButton />
-        <span className="text-sm text-neutral-700 dark:text-neutral-300 truncate">
-          {displayName}
-        </span>
+      <div className="border-t border-neutral-200 dark:border-neutral-800 p-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <UserButton />
+          <span className="text-sm text-neutral-700 dark:text-neutral-300 truncate">
+            {displayName}
+          </span>
+        </div>
+        <ThemeToggle />
       </div>
     </div>
   )
