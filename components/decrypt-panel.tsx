@@ -46,7 +46,7 @@ export function DecryptPanel({ onSuccess }: DecryptPanelProps) {
       const content = await decrypt(payload)
       const newNote = await addDecryptedNote(content)
       onSuccess(newNote.id, content)
-    } catch (err) {
+    } catch {
       setError('Failed to decrypt file. Make sure it\'s a valid encrypted note.')
     } finally {
       setIsDecrypting(false)

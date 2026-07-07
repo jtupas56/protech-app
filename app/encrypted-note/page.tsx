@@ -27,17 +27,14 @@ export default function NotesPage() {
 
   useEffect(() => {
     if (userId) {
-      loadNotes()
+      getNotes().then((loadedNotes) => {
+        setNotes(loadedNotes)
+        if (loadedNotes.length > 0 && !selectedNoteId) {
+          setSelectedNoteId(loadedNotes[0].id)
+        }
+      })
     }
-  }, [userId])
-
-  const loadNotes = async () => {
-    const loadedNotes = await getNotes()
-    setNotes(loadedNotes)
-    if (loadedNotes.length > 0 && !selectedNoteId) {
-      setSelectedNoteId(loadedNotes[0].id)
-    }
-  }
+  }, [userId, selectedNoteId])
 
   const handleNewNote = async () => {
     const newNote = await createNote('')
@@ -77,17 +74,19 @@ export default function NotesPage() {
     setSelectedNoteId(notes.find((n) => n.id !== selectedNoteId)?.id || null)
   }
 
-  const handleContentChange = (content: string) => {
+  const handleContentChange = (newContent: string) => {
     setNotes(
-      notes.map((n) => (n.id === selectedNoteId ? { ...n, content } : n))
+      notes.map((n) => (n.id === selectedNoteId ? { ...n, content: newContent } : n))
     )
   }
 
-  const handleDecryptSuccess = (noteId: string, content: string) => {
-    loadNotes()
-    setSelectedNoteId(noteId)
-    setDecryptMode(false)
-    setEditorKey((prev) => prev + 1)
+  const handleDecryptSuccess = (noteId: string) => {
+    getNotes().then((loadedNotes) => {
+      setNotes(loadedNotes)
+      setSelectedNoteId(noteId)
+      setDecryptMode(false)
+      setEditorKey((prev) => prev + 1)
+    })
   }
 
   const getTitle = (content: string) => {
@@ -128,7 +127,6 @@ export default function NotesPage() {
         <Editor
           key={editorKey}
           note={selectedNote}
-          onNoteChange={(note) => setSelectedNoteId(note?.id || null)}
           onNoteDeleted={handleNoteDeleted}
           onContentChange={handleContentChange}
         />

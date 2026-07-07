@@ -17,22 +17,24 @@ interface Note {
 
 interface EditorProps {
   note: Note | null
-  onNoteChange: (note: Note | null) => void
   onNoteDeleted: () => void
   onContentChange: (content: string) => void
 }
 
-export function Editor({ note, onNoteChange, onNoteDeleted, onContentChange }: EditorProps) {
-  const [content, setContent] = useState(note?.content || '')
+export function Editor({ note, onNoteDeleted, onContentChange }: EditorProps) {
+  const [content, setContent] = useState('')
   const [isSaving, setIsSaving] = useState(false)
-  const [showRestoredMessage, setShowRestoredMessage] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const prevNoteIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    setContent(note?.content || '')
-    if (note && textareaRef.current) {
-      textareaRef.current.focus()
+    if (note?.id !== prevNoteIdRef.current) {
+      setContent(note?.content || '')
+      prevNoteIdRef.current = note?.id || null
+      if (note && textareaRef.current) {
+        textareaRef.current.focus()
+      }
     }
   }, [note])
 
@@ -42,8 +44,8 @@ export function Editor({ note, onNoteChange, onNoteDeleted, onContentChange }: E
     }
 
     if (content !== note?.content && note) {
-      setIsSaving(true)
       saveTimeoutRef.current = setTimeout(async () => {
+        setIsSaving(true)
         await updateNote(note.id, content)
         setIsSaving(false)
         onContentChange(content)
@@ -64,11 +66,6 @@ export function Editor({ note, onNoteChange, onNoteDeleted, onContentChange }: E
     downloadEncryptedNote(payload, note.createdAt)
     await deleteNote(note.id)
     onNoteDeleted()
-  }
-
-  const showRestored = () => {
-    setShowRestoredMessage(true)
-    setTimeout(() => setShowRestoredMessage(false), 3000)
   }
 
   if (!note) {
@@ -105,13 +102,7 @@ export function Editor({ note, onNoteChange, onNoteDeleted, onContentChange }: E
     <div className="flex-1 flex flex-col bg-gray-100 dark:bg-gray-900">
       <div className="h-12 border-b bg-white dark:bg-gray-800 flex items-center justify-between px-4">
         <div className="text-sm text-muted-foreground">
-          {showRestoredMessage ? (
-            <span className="text-green-600 dark:text-green-400">Note restored</span>
-          ) : (
-            <>
-              {isSaving ? 'Saving...' : `Edited ${formatDistanceToNow(new Date(note.updatedAt))} ago`}
-            </>
-          )}
+          {isSaving ? 'Saving...' : `Edited ${formatDistanceToNow(new Date(note.updatedAt))} ago`}
         </div>
         <Button onClick={handleEncrypt} size="sm" variant="outline">
           <Lock className="w-4 h-4 mr-2" />

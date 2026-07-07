@@ -26,8 +26,8 @@ export function DeleteDialog({ open, onOpenChange, onConfirm, noteTitle }: Delet
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this note?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete <strong>{noteTitle}</strong>. If you haven't
-            encrypted it first, there's no way to get it back.
+            This will permanently delete <strong>{noteTitle}</strong>. If you haven&apos;t
+            encrypted it first, there&apos;s no way to get it back.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
