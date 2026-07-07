@@ -1,10 +1,16 @@
 'use client'
 
-import { Plus, LockOpen, Trash2, PanelLeftClose, Home } from 'lucide-react'
+import { Plus, LockOpen, MoreVertical, Home, Pencil, Download, Lock, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { UserButton, useUser } from '@clerk/nextjs'
 import { ThemeToggle } from '@/components/theme-toggle'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface Note {
   id: string
@@ -21,7 +27,9 @@ interface SidebarProps {
   onDecrypt: () => void
   onDeleteNote: (id: string) => void
   decryptMode: boolean
-  onToggleSidebar: () => void
+  onDownloadNote: (id: string) => void
+  onRenameNote: (id: string) => void
+  onEncryptNote: (id: string) => void
 }
 
 export function Sidebar({
@@ -32,7 +40,9 @@ export function Sidebar({
   onDecrypt,
   onDeleteNote,
   decryptMode,
-  onToggleSidebar,
+  onDownloadNote,
+  onRenameNote,
+  onEncryptNote,
 }: SidebarProps) {
   const { user } = useUser()
   const displayName =
@@ -47,18 +57,11 @@ export function Sidebar({
 
   return (
     <div className="w-72 flex-shrink-0 bg-neutral-50 dark:bg-neutral-950 flex flex-col h-full border-r border-neutral-200 dark:border-neutral-800">
-      {/* Sidebar Header */}
-      <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={onToggleSidebar}
-            className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-            aria-label="Toggle sidebar"
-          >
-            <PanelLeftClose className="w-4 h-4" />
-          </button>
-          <span className="text-sm text-neutral-400 ml-1">Protech Notes</span>
-        </div>
+      <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-neutral-800 relative">
+        <div className="w-12" />
+        <span className="text-sm text-neutral-400 absolute left-1/2 -translate-x-1/2">
+          Protech Notes
+        </span>
         <div className="flex items-center gap-0.5">
           <Link
             href="/"
@@ -70,7 +73,6 @@ export function Sidebar({
         </div>
       </div>
 
-      {/* 🔥 New Note + Decrypt - STACKED VERTICALLY */}
       <div className="p-3 space-y-1.5 border-b border-neutral-200 dark:border-neutral-800">
         <button
           onClick={onNewNote}
@@ -96,7 +98,6 @@ export function Sidebar({
         </button>
       </div>
 
-      {/* Notes List */}
       <div className="flex-1 overflow-y-auto p-2">
         {notes.map((note) => (
           <div
@@ -119,20 +120,41 @@ export function Sidebar({
               </div>
             </button>
 
-            <button
-              className="h-6 w-6 shrink-0 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-              onClick={(e) => {
-                e.stopPropagation()
-                onDeleteNote(note.id)
-              }}
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="h-6 w-6 shrink-0 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="w-3.5 h-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={() => onRenameNote(note.id)}>
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDownloadNote(note.id)}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onEncryptNote(note.id)}>
+                  <Lock className="w-4 h-4 mr-2" />
+                  Encrypt
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onDeleteNote(note.id)}
+                  className="text-red-500 focus:text-red-500 dark:text-red-400 dark:focus:text-red-400"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         ))}
       </div>
 
-      {/* User Profile */}
       <div className="border-t border-neutral-200 dark:border-neutral-800 p-3 flex items-center gap-3">
         <UserButton />
         <span className="text-sm text-neutral-700 dark:text-neutral-300 truncate">

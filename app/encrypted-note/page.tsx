@@ -6,8 +6,9 @@ import Link from 'next/link'
 import { Sidebar } from '@/components/sidebar'
 import { Editor } from '@/components/editor'
 import { DecryptPanel } from '@/components/decrypt-panel'
-import { getNotes, createNote, deleteNote } from '@/app/actions/notes'
-import { ArrowLeft } from 'lucide-react'
+import { getNotes, createNote, deleteNote, updateNote } from '@/app/actions/notes'
+import { encrypt, downloadEncryptedNote } from '@/lib/crypto'
+import { ArrowLeft, PanelLeft, PanelLeftClose } from 'lucide-react'
 
 interface Note {
   id: string
@@ -38,6 +39,13 @@ export default function NotesPage() {
   }, [userId, selectedNoteId])
 
   const handleNewNote = async () => {
+    // Check if there's already an empty note
+    const emptyNote = notes.find((n) => n.content === '')
+    if (emptyNote) {
+      setSelectedNoteId(emptyNote.id)
+      setDecryptMode(false)
+      return
+    }
     const newNote = await createNote('')
     setNotes([newNote, ...notes])
     setSelectedNoteId(newNote.id)
@@ -63,12 +71,6 @@ export default function NotesPage() {
     }
   }
 
-  const handleNoteDeleted = () => {
-    const remaining = notes.filter((n) => n.id !== selectedNoteId)
-    setNotes(remaining)
-    setSelectedNoteId(remaining[0]?.id || null)
-  }
-
   const handleContentChange = (newContent: string) => {
     setNotes(
       notes.map((n) => (n.id === selectedNoteId ? { ...n, content: newContent } : n))
@@ -88,11 +90,51 @@ export default function NotesPage() {
     setIsSidebarOpen(!isSidebarOpen)
   }
 
+  const handleDownloadNote = (id: string) => {
+    const note = notes.find((n) => n.id === id)
+    if (!note) return
+    const blob = new Blob([note.content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `note-${new Date(note.updatedAt).toISOString().slice(0, 10)}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleRenameNote = async (id: string) => {
+    const note = notes.find((n) => n.id === id)
+    if (!note) return
+    const currentTitle = note.content.split('\n')[0] || 'Untitled'
+    const newTitle = prompt('Rename note:', currentTitle)
+    if (newTitle !== null && newTitle.trim() !== '') {
+      const lines = note.content.split('\n')
+      lines[0] = newTitle
+      const newContent = lines.join('\n')
+      await updateNote(id, newContent)
+      setNotes(notes.map((n) => (n.id === id ? { ...n, content: newContent } : n)))
+    }
+  }
+
+  const handleEncryptNote = async (id: string) => {
+    const note = notes.find((n) => n.id === id)
+    if (!note) return
+    const payload = await encrypt(note.content)
+    downloadEncryptedNote(payload, note.createdAt)
+    await deleteNote(id)
+    const remaining = notes.filter((n) => n.id !== id)
+    setNotes(remaining)
+    if (selectedNoteId === id) {
+      setSelectedNoteId(remaining[0]?.id || null)
+    }
+  }
+
   if (!isLoaded) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>
   }
 
-  // 🟢 Signed Out: Show minimal login/back UI
   if (!userId) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-neutral-50 dark:bg-neutral-950">
@@ -121,6 +163,18 @@ export default function NotesPage() {
 
   return (
     <div className="flex h-screen bg-neutral-50 dark:bg-neutral-950 overflow-hidden">
+      <button
+        onClick={toggleSidebar}
+        className="fixed top-3 left-3 z-50 p-1.5 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+        aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+      >
+        {isSidebarOpen ? (
+          <PanelLeftClose className="w-4 h-4" />
+        ) : (
+          <PanelLeft className="w-4 h-4" />
+        )}
+      </button>
+
       {isSidebarOpen && (
         <Sidebar
           notes={notes}
@@ -130,7 +184,9 @@ export default function NotesPage() {
           onDecrypt={handleDecrypt}
           onDeleteNote={handleDeleteNote}
           decryptMode={decryptMode}
-          onToggleSidebar={toggleSidebar}
+          onDownloadNote={handleDownloadNote}
+          onRenameNote={handleRenameNote}
+          onEncryptNote={handleEncryptNote}
         />
       )}
 
@@ -141,10 +197,7 @@ export default function NotesPage() {
           <Editor
             key={editorKey}
             note={selectedNote}
-            onNoteDeleted={handleNoteDeleted}
             onContentChange={handleContentChange}
-            isSidebarOpen={isSidebarOpen}
-            onToggleSidebar={toggleSidebar}
           />
         )}
       </div>
