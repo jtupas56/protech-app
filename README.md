@@ -17,7 +17,6 @@ Encrypted note-taking web app with client-side encryption.
 - Clerk (authentication)
 - Neon Postgres (database)
 - Drizzle ORM
-- shadcn/ui (components)
 - Tailwind CSS
 
 ## Getting Started
