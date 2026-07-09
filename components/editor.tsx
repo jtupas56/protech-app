@@ -33,12 +33,14 @@ export function Editor({ note, onContentChange }: EditorProps) {
 
   useEffect(() => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+
     if (content !== note?.content && note) {
       saveTimeoutRef.current = setTimeout(async () => {
         await updateNote(note.id, content)
         onContentChange(content)
       }, 600)
     }
+
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }

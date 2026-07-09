@@ -3,7 +3,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { notes } from '@/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, and } from 'drizzle-orm'   // <-- and imported
 
 export async function getNotes() {
   try {
@@ -48,9 +48,10 @@ export async function updateNote(id: string, content: string) {
     const [updated] = await db
       .update(notes)
       .set({ content, updatedAt: new Date() })
-      .where(eq(notes.id, id))
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)))
       .returning()
 
+    if (!updated) throw new Error('Note not found or not owned')
     return updated
   } catch (error) {
     console.error('Error in updateNote:', error)
@@ -63,7 +64,7 @@ export async function deleteNote(id: string) {
     const { userId } = await auth()
     if (!userId) throw new Error('Unauthorized')
 
-    await db.delete(notes).where(eq(notes.id, id))
+    await db.delete(notes).where(and(eq(notes.id, id), eq(notes.userId, userId)))
   } catch (error) {
     console.error('Error in deleteNote:', error)
     throw error

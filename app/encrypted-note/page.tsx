@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth, SignInButton } from '@clerk/nextjs'
 import Link from 'next/link'
 import { Sidebar } from '@/components/sidebar'
@@ -22,13 +22,15 @@ export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([])
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
   const [decryptMode, setDecryptMode] = useState(false)
-  const [editorKey, setEditorKey] = useState(0)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+
+  const initialLoadDone = useRef(false)
 
   const selectedNote = notes.find((n) => n.id === selectedNoteId) || null
 
   useEffect(() => {
-    if (userId) {
+    if (userId && !initialLoadDone.current) {
+      initialLoadDone.current = true
       getNotes().then((loadedNotes) => {
         setNotes(loadedNotes)
         if (loadedNotes.length > 0 && !selectedNoteId) {
@@ -36,20 +38,25 @@ export default function NotesPage() {
         }
       })
     }
-  }, [userId, selectedNoteId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]) // Only load once
 
   const handleNewNote = async () => {
-    // Check if there's already an empty note
     const emptyNote = notes.find((n) => n.content === '')
     if (emptyNote) {
       setSelectedNoteId(emptyNote.id)
       setDecryptMode(false)
       return
     }
-    const newNote = await createNote('')
-    setNotes([newNote, ...notes])
-    setSelectedNoteId(newNote.id)
-    setDecryptMode(false)
+
+    try {
+      const newNote = await createNote('')
+      setNotes([newNote, ...notes])
+      setSelectedNoteId(newNote.id)
+      setDecryptMode(false)
+    } catch {
+      alert('Failed to create note.')
+    }
   }
 
   const handleSelectNote = (id: string) => {
@@ -63,11 +70,15 @@ export default function NotesPage() {
   }
 
   const handleDeleteNote = async (id: string) => {
-    await deleteNote(id)
-    const remaining = notes.filter((n) => n.id !== id)
-    setNotes(remaining)
-    if (selectedNoteId === id) {
-      setSelectedNoteId(remaining[0]?.id || null)
+    try {
+      await deleteNote(id)
+      const remaining = notes.filter((n) => n.id !== id)
+      setNotes(remaining)
+      if (selectedNoteId === id) {
+        setSelectedNoteId(remaining[0]?.id || null)
+      }
+    } catch {
+      alert('Failed to delete note.')
     }
   }
 
@@ -82,7 +93,6 @@ export default function NotesPage() {
       setNotes(loadedNotes)
       setSelectedNoteId(noteId)
       setDecryptMode(false)
-      setEditorKey((prev) => prev + 1)
     })
   }
 
@@ -104,30 +114,37 @@ export default function NotesPage() {
     URL.revokeObjectURL(url)
   }
 
-  const handleRenameNote = async (id: string) => {
+  const handleRenameNote = async (id: string, newTitle: string) => {
     const note = notes.find((n) => n.id === id)
     if (!note) return
-    const currentTitle = note.content.split('\n')[0] || 'Untitled'
-    const newTitle = prompt('Rename note:', currentTitle)
-    if (newTitle !== null && newTitle.trim() !== '') {
-      const lines = note.content.split('\n')
-      lines[0] = newTitle
-      const newContent = lines.join('\n')
+
+    const lines = note.content.split('\n')
+    lines[0] = newTitle
+    const newContent = lines.join('\n')
+
+    try {
       await updateNote(id, newContent)
       setNotes(notes.map((n) => (n.id === id ? { ...n, content: newContent } : n)))
+    } catch {
+      alert('Failed to rename note.')
     }
   }
 
   const handleEncryptNote = async (id: string) => {
     const note = notes.find((n) => n.id === id)
     if (!note) return
-    const payload = await encrypt(note.content)
-    downloadEncryptedNote(payload, note.createdAt)
-    await deleteNote(id)
-    const remaining = notes.filter((n) => n.id !== id)
-    setNotes(remaining)
-    if (selectedNoteId === id) {
-      setSelectedNoteId(remaining[0]?.id || null)
+
+    try {
+      const payload = await encrypt(note.content)
+      downloadEncryptedNote(payload, note.createdAt)
+      await deleteNote(id)
+      const remaining = notes.filter((n) => n.id !== id)
+      setNotes(remaining)
+      if (selectedNoteId === id) {
+        setSelectedNoteId(remaining[0]?.id || null)
+      }
+    } catch {
+      alert('Failed to encrypt note.')
     }
   }
 
@@ -175,7 +192,10 @@ export default function NotesPage() {
         )}
       </button>
 
-      {isSidebarOpen && (
+      <div
+        className="overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0"
+        style={{ width: isSidebarOpen ? '288px' : '0px' }}
+      >
         <Sidebar
           notes={notes}
           selectedNoteId={selectedNoteId}
@@ -188,14 +208,14 @@ export default function NotesPage() {
           onRenameNote={handleRenameNote}
           onEncryptNote={handleEncryptNote}
         />
-      )}
+      </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {decryptMode ? (
           <DecryptPanel onSuccess={handleDecryptSuccess} />
         ) : (
           <Editor
-            key={editorKey}
+            key={selectedNote ? `${selectedNote.id}-${selectedNote.content}` : 'empty'}
             note={selectedNote}
             onContentChange={handleContentChange}
           />
