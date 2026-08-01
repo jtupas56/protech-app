@@ -36,6 +36,14 @@ jobs:
           name: Run smoke tests against deployed app
           command: npm run test:e2e -- --config=playwright.config.ts --project=chromium
 
+      - store_artifacts:
+          path: playwright-report
+          destination: playwright-report
+
+      - store_artifacts:
+          path: test-results
+          destination: test-results
+
       - run:
           name: Run lint
           command: npm run lint
