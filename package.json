@@ -8,9 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed",
-    "test:e2e:report": "playwright test --reporter=html",
-    "test:e2e:show-report": "playwright show-report playwright-report"
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.7",

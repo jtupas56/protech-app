@@ -11,8 +11,6 @@ const config: PlaywrightTestConfig = {
         viewport: { width: 1280, height: 800 },
         actionTimeout: 10000,
         ignoreHTTPSErrors: true,
-        screenshot: 'only-on-failure',
-        trace: 'retain-on-failure',
         video: 'retain-on-failure',
     },
     projects: [
@@ -23,11 +21,7 @@ const config: PlaywrightTestConfig = {
             },
         },
     ],
-    reporter: [
-        ['list'],
-        ['github'],
-        ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ],
+    reporter: [['list'], ['github']],
 }
 
 export default config
