@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, SignInButton } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -91,7 +91,19 @@ export default function FileVerification() {
     );
 
   if (!isLoaded) return <div className="flex h-screen items-center justify-center">Loading...</div>;
-  if (!userId) return <div className="flex h-screen items-center justify-center">Please sign in.</div>;
+  if (!userId) return (
+    <div className="flex h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100 mb-4">Protech Notes</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Sign in to access file verification.</p>
+        <SignInButton mode="modal">
+          <button className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 transition-colors">
+            Sign In
+          </button>
+        </SignInButton>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12">

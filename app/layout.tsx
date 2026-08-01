@@ -3,8 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Navbar } from "@/components/navbar";
-import { cn } from "@/lib/utils";
+import { Navbar } from "@/components/navbar";import { Footer } from '@/components/footer';import { cn } from "@/lib/utils";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -41,7 +40,8 @@ export default function RootLayout({
         >
           <ClerkProvider>
             <Navbar />
-            {children}
+            <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+            <Footer />
           </ClerkProvider>
         </ThemeProvider>
       </body>
