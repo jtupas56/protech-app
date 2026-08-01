@@ -1,7 +1,6 @@
-// components/navbar.tsx
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation' // Import this
+import { usePathname } from 'next/navigation'
 import { UserButton, SignInButton, SignUpButton, Show } from '@clerk/nextjs'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
@@ -9,7 +8,6 @@ import { Button } from '@/components/ui/button'
 export function Navbar() {
   const pathname = usePathname()
 
-  // 🔥 HIDE the global navbar specifically on the encrypted note page
   if (pathname === '/encrypted-note') {
     return null
   }
@@ -18,37 +16,38 @@ export function Navbar() {
 
   return (
     <nav className="border-b bg-white dark:bg-gray-900">
-      {/* ... rest of your navbar code stays exactly the same ... */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center h-16">
+          <div className="flex-shrink-0">
             <Link href="/" className="text-xl font-bold">
               Protech Notes
             </Link>
-            <div className="flex space-x-1">
-              <Link href="/">
-                <Button variant={isActive('/') ? 'default' : 'ghost'} size="sm">
-                  Home
-                </Button>
-              </Link>
-              <Link href="/encrypted-note">
-                <Button variant={isActive('/encrypted-note') ? 'default' : 'ghost'} size="sm">
-                  Encrypted Note
-                </Button>
-              </Link>
-              <Link href="/file-verification">
-                <Button variant={isActive('/file-verification') ? 'default' : 'ghost'} size="sm">
-                  File Verification
-                </Button>
-              </Link>
-              <Link href="/contact">
-                <Button variant={isActive('/contact') ? 'default' : 'ghost'} size="sm">
-                  Contact
-                </Button>
-              </Link>
-            </div>
           </div>
-          <div className="flex items-center space-x-4">
+
+          <div className="flex-1 flex justify-center space-x-1">
+            <Link href="/">
+              <Button variant={isActive('/') ? 'default' : 'ghost'} size="sm">
+                Home
+              </Button>
+            </Link>
+            <Link href="/encrypted-note">
+              <Button variant={isActive('/encrypted-note') ? 'default' : 'ghost'} size="sm">
+                Encrypted Note
+              </Button>
+            </Link>
+            <Link href="/file-verification">
+              <Button variant={isActive('/file-verification') ? 'default' : 'ghost'} size="sm">
+                File Verification
+              </Button>
+            </Link>
+            <Link href="/contact">
+              <Button variant={isActive('/contact') ? 'default' : 'ghost'} size="sm">
+                Contact
+              </Button>
+            </Link>
+          </div>
+
+          <div className="flex-shrink-0 flex items-center space-x-4">
             <ThemeToggle />
             <Show when="signed-out">
               <SignInButton mode="modal">
