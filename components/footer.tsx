@@ -2,20 +2,88 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { Lock, Heart, ExternalLink } from 'lucide-react'
 
 export function Footer() {
   const pathname = usePathname()
   if (pathname === '/encrypted-note') return null
 
+  const currentYear = new Date().getFullYear()
+
   return (
-    <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-      <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8 text-sm text-slate-600 dark:text-slate-400">
-        <p>© {new Date().getFullYear()} Protech Notes. All rights reserved.</p>
-        <div className="flex flex-wrap items-center gap-4">
-          <Link href="/" className="hover:text-slate-900 dark:hover:text-white">Home</Link>
-          <Link href="/encrypted-note" className="hover:text-slate-900 dark:hover:text-white">Encrypted Notes</Link>
-          <Link href="/file-verification" className="hover:text-slate-900 dark:hover:text-white">File Verification</Link>
-          <Link href="/contact" className="hover:text-slate-900 dark:hover:text-white">Contact</Link>
+    <footer className="border-t bg-background/50 backdrop-blur-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* About Section */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-1">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Lock className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-lg font-bold">Protech Notes</span>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+              Secure, encrypted note-taking application. Your notes are encrypted client-side 
+              and stored as JSON files that only you can access.
+            </p>
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <span>Made with x23153920</span>
+              
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h3 className="font-semibold mb-4">Quick Links</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/encrypted-note" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Encrypted Notes
+                </Link>
+              </li>
+              <li>
+                <Link href="/file-verification" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  File Verification
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Contact
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal & Links */}
+          <div>
+            <h3 className="font-semibold mb-4">Legal</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center">
+                  Privacy Policy
+                  <ExternalLink className="w-3 h-3 ml-1" />
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center">
+                  Terms of Service
+                  <ExternalLink className="w-3 h-3 ml-1" />
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Copyright */}
+        <div className="mt-8 pt-8 border-t">
+          <p className="text-sm text-muted-foreground text-center">
+            © {currentYear} Protech Notes. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
