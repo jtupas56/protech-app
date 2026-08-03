@@ -1,4 +1,8 @@
 import type { PlaywrightTestConfig } from '@playwright/test'
+import dotenv from 'dotenv'
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' })
 
 const config: PlaywrightTestConfig = {
     testDir: './tests/e2e',

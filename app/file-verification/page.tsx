@@ -61,6 +61,16 @@ export default function FileVerification() {
       const hashResult = await hashFile(file);
       setHash(hashResult);
 
+      // Check if hash already exists
+      const existingRecord = records.find(r => r.hash === hashResult);
+      if (existingRecord) {
+        alert(`This file's hash already exists in your records (from ${new Date(existingRecord.timestamp).toLocaleString()}). Duplicate hashes are not allowed for integrity purposes.`);
+        setFile(null);
+        (document.getElementById('file-upload') as HTMLInputElement).value = '';
+        setIsProcessing(false);
+        return;
+      }
+
       const newRecord: Record = {
         id: Date.now().toString(),
         filename: file.name,
