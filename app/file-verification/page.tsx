@@ -12,9 +12,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { hashFile } from '@/lib/crypto';
-import { FileBox, Fingerprint, Database, Search } from 'lucide-react';
+import { FileBox, Fingerprint, Database, Search, Shield, CheckCircle } from 'lucide-react';
 
 interface Record {
   id: string;
@@ -31,6 +41,13 @@ export default function FileVerification() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [records, setRecords] = useState<Record[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [duplicateMessage, setDuplicateMessage] = useState('');
 
   useEffect(() => {
     if (!userId) return;
@@ -52,7 +69,8 @@ export default function FileVerification() {
 
   const handleVerify = async () => {
     if (!file) {
-      alert('Please select a file first.');
+      setErrorMessage('Please select a file first.');
+      setShowErrorDialog(true);
       return;
     }
 
@@ -64,7 +82,8 @@ export default function FileVerification() {
       // Check if hash already exists
       const existingRecord = records.find(r => r.hash === hashResult);
       if (existingRecord) {
-        alert(`This file's hash already exists in your records (from ${new Date(existingRecord.timestamp).toLocaleString()}). Duplicate hashes are not allowed for integrity purposes.`);
+        setDuplicateMessage(`This file's hash already exists in your records (from ${new Date(existingRecord.timestamp).toLocaleString()}). Duplicate hashes are not allowed for integrity purposes.`);
+        setShowDuplicateDialog(true);
         setFile(null);
         (document.getElementById('file-upload') as HTMLInputElement).value = '';
         setIsProcessing(false);
@@ -83,15 +102,24 @@ export default function FileVerification() {
       setFile(null);
       (document.getElementById('file-upload') as HTMLInputElement).value = '';
     } catch {
-      alert('Failed to verify file.');
+      setErrorMessage('Failed to verify file.');
+      setShowErrorDialog(true);
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleDelete = (id: string) => {
-    if (!confirm('Delete this record?')) return;
-    saveRecords(records.filter((r) => r.id !== id));
+    setDeleteId(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (deleteId) {
+      saveRecords(records.filter((r) => r.id !== deleteId));
+      setDeleteId(null);
+    }
+    setShowDeleteDialog(false);
   };
 
   const filteredRecords = searchQuery.trim() === ''
@@ -102,15 +130,60 @@ export default function FileVerification() {
 
   if (!isLoaded) return <div className="flex h-screen items-center justify-center">Loading...</div>;
   if (!userId) return (
-    <div className="flex h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100 mb-4">Protech Notes</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Sign in to access file verification.</p>
-        <SignInButton mode="modal">
-          <button className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 transition-colors">
-            Sign In
-          </button>
-        </SignInButton>
+    <div className="flex h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-muted/20">
+      <div className="w-full max-w-md px-4">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Fingerprint className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-3xl font-bold mb-2">File Verification</h1>
+          <p className="text-muted-foreground">
+            Sign in to access file hash verification
+          </p>
+        </div>
+        
+        <Card className="border-border/50">
+          <CardHeader>
+            <CardTitle className="text-xl">Authentication Required</CardTitle>
+            <CardDescription>
+            Verify file integrity with SHA-256 hashing and track your verification history
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Fingerprint className="w-3 h-3 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  SHA-256 hashing for file integrity
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Shield className="w-3 h-3 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Track your verification history
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <CheckCircle className="w-3 h-3 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Duplicate hash detection for integrity
+                </p>
+              </div>
+            </div>
+            
+            <SignInButton mode="modal">
+              <Button className="w-full" size="lg">
+                Sign In to Continue
+              </Button>
+            </SignInButton>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -246,10 +319,11 @@ export default function FileVerification() {
                             size="sm"
                             onClick={() => {
                               navigator.clipboard.writeText(r.hash);
-                              alert('Copied!');
+                              setShowCopySuccess(true);
+                              setTimeout(() => setShowCopySuccess(false), 2000);
                             }}
                           >
-                            Copy
+                            {showCopySuccess ? 'Copied!' : 'Copy'}
                           </Button>
                           <Button
                             variant="destructive"
@@ -268,6 +342,52 @@ export default function FileVerification() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Error Dialog */}
+      <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Error</AlertDialogTitle>
+            <AlertDialogDescription>
+              {errorMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Duplicate Hash Dialog */}
+      <AlertDialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicate Hash Detected</AlertDialogTitle>
+            <AlertDialogDescription>
+              {duplicateMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Record</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this record? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

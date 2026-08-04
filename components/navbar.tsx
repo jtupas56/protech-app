@@ -4,10 +4,12 @@ import { usePathname } from 'next/navigation'
 import { UserButton, SignInButton, SignUpButton, Show } from '@clerk/nextjs'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
-import { Lock } from 'lucide-react'
+import { Lock, Menu, X } from 'lucide-react'
+import { useState } from 'react'
 
 export function Navbar() {
   const pathname = usePathname()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   if (pathname === '/encrypted-note') {
     return null
@@ -24,11 +26,13 @@ export function Navbar() {
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Lock className="w-5 h-5 text-primary" />
               </div>
-              <span className="text-xl font-bold">Protech Notes</span>
+              <span className="text-xl font-bold hidden sm:block">Protech Notes</span>
+              <span className="text-xl font-bold sm:hidden">Protech</span>
             </Link>
           </div>
 
-          <div className="flex-1 flex justify-center space-x-1">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex flex-1 justify-center space-x-1">
             <Link href="/">
               <Button 
                 variant={isActive('/') ? 'default' : 'ghost'} 
@@ -67,7 +71,8 @@ export function Navbar() {
             </Link>
           </div>
 
-          <div className="flex-shrink-0 flex items-center space-x-3">
+          {/* Desktop Auth */}
+          <div className="hidden md:flex flex-shrink-0 items-center space-x-3">
             <ThemeToggle />
             <Show when="signed-out">
               <SignInButton mode="modal">
@@ -93,7 +98,88 @@ export function Navbar() {
               </div>
             </Show>
           </div>
+
+          {/* Mobile Menu Button */}
+          <div className="flex md:hidden flex-1 justify-end items-center space-x-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-md hover:bg-muted transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden py-4 space-y-4 border-t">
+            <div className="flex flex-col space-y-2">
+              <Link href="/" onClick={() => setMobileMenuOpen(false)}>
+                <Button 
+                  variant={isActive('/') ? 'default' : 'ghost'} 
+                  className="w-full justify-start"
+                >
+                  Home
+                </Button>
+              </Link>
+              <Link href="/encrypted-note" onClick={() => setMobileMenuOpen(false)}>
+                <Button 
+                  variant={isActive('/encrypted-note') ? 'default' : 'ghost'} 
+                  className="w-full justify-start"
+                >
+                  Encrypted Note
+                </Button>
+              </Link>
+              <Link href="/file-verification" onClick={() => setMobileMenuOpen(false)}>
+                <Button 
+                  variant={isActive('/file-verification') ? 'default' : 'ghost'} 
+                  className="w-full justify-start"
+                >
+                  File Verification
+                </Button>
+              </Link>
+              <Link href="/contact" onClick={() => setMobileMenuOpen(false)}>
+                <Button 
+                  variant={isActive('/contact') ? 'default' : 'ghost'} 
+                  className="w-full justify-start"
+                >
+                  Contact
+                </Button>
+              </Link>
+            </div>
+            <div className="flex flex-col space-y-2 pt-4 border-t">
+              <Show when="signed-out">
+                <SignInButton mode="modal">
+                  <Button variant="outline" className="w-full">
+                    Sign In
+                  </Button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <Button className="w-full">
+                    Sign Up
+                  </Button>
+                </SignUpButton>
+              </Show>
+              <Show when="signed-in">
+                <div className="flex items-center justify-center">
+                  <UserButton 
+                    appearance={{
+                      elements: {
+                        avatarBox: "w-9 h-9",
+                      }
+                    }}
+                  />
+                </div>
+              </Show>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   )

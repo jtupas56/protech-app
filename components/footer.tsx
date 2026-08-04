@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Lock, Heart, ExternalLink } from 'lucide-react'
+import { Lock, ExternalLink } from 'lucide-react'
 
 export function Footer() {
   const pathname = usePathname()
@@ -12,10 +12,10 @@ export function Footer() {
 
   return (
     <footer className="border-t bg-background/50 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* About Section */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-1">
+          <div className="col-span-1 sm:col-span-2 lg:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Lock className="w-5 h-5 text-primary" />
@@ -80,8 +80,8 @@ export function Footer() {
         </div>
 
         {/* Copyright */}
-        <div className="mt-8 pt-8 border-t">
-          <p className="text-sm text-muted-foreground text-center">
+        <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t">
+          <p className="text-xs sm:text-sm text-muted-foreground text-center">
             © {currentYear} Protech Notes. All rights reserved.
           </p>
         </div>

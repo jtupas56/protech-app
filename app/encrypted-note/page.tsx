@@ -8,7 +8,18 @@ import { Editor } from '@/components/editor'
 import { DecryptPanel } from '@/components/decrypt-panel'
 import { getNotes, createNote, deleteNote, updateNote } from '@/app/actions/notes'
 import { encrypt, downloadEncryptedNote } from '@/lib/crypto'
-import { ArrowLeft, PanelLeft, PanelLeftClose } from 'lucide-react'
+import { ArrowLeft, PanelLeft, PanelLeftClose, Lock, FileText } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface Note {
   id: string
@@ -23,6 +34,8 @@ export default function NotesPage() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
   const [decryptMode, setDecryptMode] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [showErrorDialog, setShowErrorDialog] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const initialLoadDone = useRef(false)
 
@@ -55,7 +68,8 @@ export default function NotesPage() {
       setSelectedNoteId(newNote.id)
       setDecryptMode(false)
     } catch {
-      alert('Failed to create note.')
+      setErrorMessage('Failed to create note.')
+      setShowErrorDialog(true)
     }
   }
 
@@ -78,7 +92,8 @@ export default function NotesPage() {
         setSelectedNoteId(remaining[0]?.id || null)
       }
     } catch {
-      alert('Failed to delete note.')
+      setErrorMessage('Failed to delete note.')
+      setShowErrorDialog(true)
     }
   }
 
@@ -126,7 +141,8 @@ export default function NotesPage() {
       await updateNote(id, newContent)
       setNotes(notes.map((n) => (n.id === id ? { ...n, content: newContent } : n)))
     } catch {
-      alert('Failed to rename note.')
+      setErrorMessage('Failed to rename note.')
+      setShowErrorDialog(true)
     }
   }
 
@@ -144,7 +160,8 @@ export default function NotesPage() {
         setSelectedNoteId(remaining[0]?.id || null)
       }
     } catch {
-      alert('Failed to encrypt note.')
+      setErrorMessage('Failed to encrypt note.')
+      setShowErrorDialog(true)
     }
   }
 
@@ -154,25 +171,66 @@ export default function NotesPage() {
 
   if (!userId) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-neutral-50 dark:bg-neutral-950">
+      <div className="flex h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-muted/20">
         <Link
           href="/"
-          className="absolute top-4 left-4 p-2 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-400 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-neutral-100"
+          className="absolute top-4 left-4 p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div className="text-center max-w-sm">
-          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
-            Protech Notes
-          </h1>
-          <p className="text-neutral-500 dark:text-neutral-400 text-sm mb-6">
-            Sign in to access your encrypted notes.
-          </p>
-          <SignInButton mode="modal">
-            <button className="px-4 py-2 text-sm rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200 transition-colors">
-              Sign In
-            </button>
-          </SignInButton>
+        <div className="w-full max-w-md px-4">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="text-3xl font-bold mb-2">Protech Notes</h1>
+            <p className="text-muted-foreground">
+              Sign in to access your encrypted notes
+            </p>
+          </div>
+          
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-xl">Authentication Required</CardTitle>
+              <CardDescription>
+                Create and manage your secure, encrypted notes with client-side encryption
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Lock className="w-3 h-3 text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    AES-256 encryption for your notes
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Lock className="w-3 h-3 text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Your encryption key never leaves your device
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FileText className="w-3 h-3 text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Download encrypted notes as JSON files
+                  </p>
+                </div>
+              </div>
+              
+              <SignInButton mode="modal">
+                <Button className="w-full" size="lg">
+                  Sign In to Continue
+                </Button>
+              </SignInButton>
+            </CardContent>
+          </Card>
         </div>
       </div>
     )
@@ -221,6 +279,21 @@ export default function NotesPage() {
           />
         )}
       </div>
+
+      {/* Error Dialog */}
+      <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Error</AlertDialogTitle>
+            <AlertDialogDescription>
+              {errorMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
